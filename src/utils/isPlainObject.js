@@ -1,7 +1,4 @@
-/**
- * @param {any} obj The object to inspect.
- * @returns {boolean} True if the argument appears to be a plain object.
- */
+// _proto_ -> Object.Prototype
 export default function isPlainObject(obj) {
   if (typeof obj !== 'object' || obj === null) return false
 

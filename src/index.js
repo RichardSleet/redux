@@ -6,13 +6,10 @@ import compose from './compose'
 import warning from './utils/warning'
 import __DO_NOT_USE__ActionTypes from './utils/actionTypes'
 
-/*
- * This is a dummy function to check if the function name has been altered by minification.
- * If the function has been minified and NODE_ENV !== 'production', warn the user.
- */
 function isCrushed() {}
 
 if (
+  // 创建傀儡函数,判断是否在开发模式下被压缩. 如若发生了压缩则会被改变.
   process.env.NODE_ENV !== 'production' &&
   typeof isCrushed.name === 'string' &&
   isCrushed.name !== 'isCrushed'
@@ -27,10 +24,10 @@ if (
 }
 
 export {
-  createStore,
-  combineReducers,
-  bindActionCreators,
-  applyMiddleware,
-  compose,
+  createStore, // done
+  combineReducers, // done
+  bindActionCreators, // done
+  applyMiddleware, // done
+  compose, // done
   __DO_NOT_USE__ActionTypes
 }

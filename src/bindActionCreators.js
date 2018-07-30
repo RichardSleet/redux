@@ -25,6 +25,8 @@ function bindActionCreator(actionCreator, dispatch) {
  * function as `actionCreators`, the return value will also be a single
  * function.
  */
+
+// 将 actionCreator 和 dispatch绑定, 创建成功action后自动 dispatch
 export default function bindActionCreators(actionCreators, dispatch) {
   if (typeof actionCreators === 'function') {
     return bindActionCreator(actionCreators, dispatch)
@@ -40,7 +42,9 @@ export default function bindActionCreators(actionCreators, dispatch) {
   }
 
   const keys = Object.keys(actionCreators)
+
   const boundActionCreators = {}
+  
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
     const actionCreator = actionCreators[key]
@@ -48,5 +52,6 @@ export default function bindActionCreators(actionCreators, dispatch) {
       boundActionCreators[key] = bindActionCreator(actionCreator, dispatch)
     }
   }
+  
   return boundActionCreators
 }

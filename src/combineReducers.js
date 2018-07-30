@@ -14,18 +14,22 @@ function getUndefinedStateErrorMessage(key, action) {
   )
 }
 
+// TODO: 这是个什么贵
 function getUnexpectedStateShapeWarningMessage(
   inputState,
-  reducers,
+  reducers, // 聚合过的 reducer
   action,
   unexpectedKeyCache
 ) {
   const reducerKeys = Object.keys(reducers)
+
+  // 是否是第一次执行
   const argumentName =
     action && action.type === ActionTypes.INIT
       ? 'preloadedState argument passed to createStore'
       : 'previous state received by the reducer'
 
+  // 没有reducer
   if (reducerKeys.length === 0) {
     return (
       'Store does not have a valid reducer. Make sure the argument passed ' +
@@ -33,6 +37,7 @@ function getUnexpectedStateShapeWarningMessage(
     )
   }
 
+  // 不是纯对象
   if (!isPlainObject(inputState)) {
     return (
       `The ${argumentName} has unexpected type of "` +
@@ -62,10 +67,13 @@ function getUnexpectedStateShapeWarningMessage(
   }
 }
 
+// 对 finalReducerKeys 进行检查 防止返回 undefined
 function assertReducerShape(reducers) {
   Object.keys(reducers).forEach(key => {
     const reducer = reducers[key]
+
     const initialState = reducer(undefined, { type: ActionTypes.INIT })
+
 
     if (typeof initialState === 'undefined') {
       throw new Error(
@@ -78,6 +86,7 @@ function assertReducerShape(reducers) {
     }
 
     if (
+      // 传入一个
       typeof reducer(undefined, {
         type: ActionTypes.PROBE_UNKNOWN_ACTION()
       }) === 'undefined'
@@ -96,25 +105,16 @@ function assertReducerShape(reducers) {
   })
 }
 
-/**
- * Turns an object whose values are different reducer functions, into a single
- * reducer function. It will call every child reducer, and gather their results
- * into a single state object, whose keys correspond to the keys of the passed
- * reducer functions.
- *
- * @param {Object} reducers An object whose values correspond to different
- * reducer functions that need to be combined into one. One handy way to obtain
- * it is to use ES6 `import * as reducers` syntax. The reducers may never return
- * undefined for any action. Instead, they should return their initial state
- * if the state passed to them was undefined, and the current state for any
- * unrecognized action.
- *
- * @returns {Function} A reducer function that invokes every reducer inside the
- * passed object, and builds a state object with the same shape.
- */
+ /**
+  * @param {Object} reducers 一个对象通常是拿到 export default { reducer1, reducer2 }
+  * 这种形式. 其中Reducer永远不能返回 undefined 这里面也会对这些做检查的处理.
+  * @returns {Function} 一个 reducer 的 function 可以更新所有的 子reducer 来构建 store
+  */
 export default function combineReducers(reducers) {
   const reducerKeys = Object.keys(reducers)
   const finalReducers = {}
+  
+  // 这一大坨循环就是为了 copy reducer里面的函数到 finalReducers 并且做些校验
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
 
@@ -128,6 +128,7 @@ export default function combineReducers(reducers) {
       finalReducers[key] = reducers[key]
     }
   }
+  
   const finalReducerKeys = Object.keys(finalReducers)
 
   let unexpectedKeyCache
@@ -152,27 +153,34 @@ export default function combineReducers(reducers) {
         state,
         finalReducers,
         action,
-        unexpectedKeyCache
+        unexpectedKeyCache // TODO: unexpectedKeyCache
       )
       if (warningMessage) {
         warning(warningMessage)
       }
     }
 
+    // 不发生改变的缓存
     let hasChanged = false
     const nextState = {}
+    // 触发一遍子reducer 再次得到状态树
     for (let i = 0; i < finalReducerKeys.length; i++) {
       const key = finalReducerKeys[i]
       const reducer = finalReducers[key]
+
       const previousStateForKey = state[key]
+      
       const nextStateForKey = reducer(previousStateForKey, action)
+
       if (typeof nextStateForKey === 'undefined') {
         const errorMessage = getUndefinedStateErrorMessage(key, action)
         throw new Error(errorMessage)
       }
+
       nextState[key] = nextStateForKey
       hasChanged = hasChanged || nextStateForKey !== previousStateForKey
     }
+
     return hasChanged ? nextState : state
   }
 }
